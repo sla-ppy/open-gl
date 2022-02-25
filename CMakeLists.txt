@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(glfw)
 
-add_executable(open_gl main.cpp src/glad.c)
+add_executable(open_gl src/main.cpp src/glad.c)
 
 target_include_directories (${CMAKE_PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glfw/include)
 
