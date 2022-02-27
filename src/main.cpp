@@ -20,11 +20,14 @@ const char *fragmentShaderSource = "#version 330 core\n"
                                   "}\0";
 
 
+// function prototypes
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 
 void processInput(GLFWwindow *window);
 
-void processVertexShader();
+unsigned int processVertexShader();
+unsigned int processFragmentShader();
+unsigned int processShaderProgram();
 
 // global variables
 const unsigned int SCREEN_WIDTH{800};
@@ -85,14 +88,13 @@ int main() {
                 0.0f, 0.5f, 0.0f
         };
 
-        processVertexShader();
+        
 
-        // ------------------ FRAGMENT SHADER ------------------
-        // TLDR: handles colours in an RGBA form
-        unsigned int fragmentShader;
-        fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
-        glCompileShader(fragmentShader);
+        // VAO - vertex array object
+        unsigned int VAO;
+        glGenVertexArrays(1, &VAO);
+
+        glBindVertexArray(VAO);
 
         unsigned int VBO;
         glGenBuffers(1, &VBO);
@@ -107,6 +109,27 @@ int main() {
         // STATIC, set once, used many times
         // DYNAMIC, changed alot, used alot
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        // telling opengl how to interpret vertex data / vertex attribute pointers
+        // 1. which vertex attribute to configure
+        // 2. size of the vertex attribute, vec3 so 3
+        // 3. type of data held
+        // 4. if we want to normalize the data
+        // 5. "stride" - space between consecutive vertex attributes
+        // 6. set the beginning of the buffer to the start of the data array
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)nullptr);
+        glEnableVertexAttribArray(0);
+
+        // process shaders through a program which is linked to the shaders
+        // use whenever we want to render something
+        unsigned int shaderProgram = processShaderProgram();
+        glUseProgram(shaderProgram);
+
+        // we want to draw something, we take the corresponding VAO, bind, draw, unbind VAO again
+        glBindVertexArray(VAO);
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        // TODO: draw anything will come here!
 
         // glfw: check and call IO(key press, release, mouse move) events, swap the buffer
         glfwPollEvents();
@@ -132,7 +155,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-void processVertexShader() {
+unsigned int processVertexShader() {
     // ---------------------- VERTEX SHADER ----------------------
     // TLDR:
     // we create an object for the shader, so it can dynamically compile
@@ -145,12 +168,63 @@ void processVertexShader() {
     glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
     glCompileShader(vertexShader);
 
+    // check if vertex shader compiled successfully
     int success;
     char infoLog[512];
     glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    // check if shader compiled successfully
     if (!success) {
         glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
+
+    return vertexShader;
+}
+
+unsigned int processFragmentShader() {
+    // ------------------ FRAGMENT SHADER ------------------
+    // TLDR: handles colours in an RGBA form
+    unsigned int fragmentShader;
+    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
+    glCompileShader(fragmentShader);
+
+    // check if vertex shader compiled successfully
+    int success;
+    char infoLog[512];
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
+        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+
+    return fragmentShader;
+}
+
+unsigned int processShaderProgram() {
+    // ----------------- SHADER PROGRAM -------------------
+    // TDLR: links vertex and fragment shader with out program
+    unsigned int shaderProgram;
+    shaderProgram = glCreateProgram();
+
+    // take vertexShader from function so we can use it in the shader program
+    unsigned int vertexShader = processVertexShader();
+    unsigned int fragmentShader = processFragmentShader();
+
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+
+    // check if shader program links successfully
+    int success;
+    char infoLog[512];
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
+        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+    }
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    return shaderProgram;
 }
