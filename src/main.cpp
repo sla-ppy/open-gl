@@ -67,6 +67,70 @@ int main() {
 
     GLFWwindow *window = initWindow();
 
+    /*
+// we have to define 3 vertices in 3D (OpenGL handles all its graphics in 3D)
+// OpenGL's range of values: -1.0 and 1.0 on all 3 axes (x, y and z)
+// if they are outside of this spectrum, they are not taken into consideration
+// Vertex Buffer Object - stores large amount of vertice data in it
+// CPU takes a long time to get the data to GPU
+// once data is in GPU, the process becomes fast, so we want to send as much data at once as possible
+*/
+    /*
+    // drawing a rectangle with triangles
+    // EBO - Element Buffer Objects
+    // we use indexed drawing to draw 4 vertices in order instead of a total of 6
+    // , considering we would have to use 2 triangles
+    */
+    float vertices[] = {
+            0.5f,  0.5f, 0.0f,  // top right
+            0.5f, -0.5f, 0.0f,  // bottom right
+            -0.5f, -0.5f, 0.0f,  // bottom left
+            -0.5f,  0.5f, 0.0f   // top left
+    };
+    unsigned int indices[] = {  // note that we start from 0!
+            0, 1, 3,   // first triangle
+            1, 2, 3    // second triangle
+    };
+
+    // VAO - vertex array object
+    // if we want to draw something, we take the corresponding VAO, bind, draw, unbind VAO again
+    unsigned int VAO;
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    // VBO - vertex buffer object
+    unsigned int VBO;
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    /*
+1. what type of buffer we want data from
+2. size of data in bytes we want to pass
+3. actual data we want to send
+4. how we want to manage the data
+STREAM, set once, used a few times at most
+STATIC, set once, used many times
+DYNAMIC, changed alot, used alot
+*/ // paremeters of glBufferData
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // EBO - element buffer object
+    unsigned int EBO;
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    /*
+    // telling opengl how to interpret vertex data / vertex attribute pointers
+    // 1. which vertex attribute to configure
+    // 2. size of the vertex attribute, vec3 so 3
+    // 3. type of data held
+    // 4. if we want to normalize the data
+    // 5. "stride" - space between consecutive vertex attributes
+    // 6. set the beginning of the buffer to the start of the data array
+    */ // parameters of glVertexAttribPointer
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)nullptr);
+    glEnableVertexAttribArray(0);
+
     // render loop
     while (!glfwWindowShouldClose(window)) {
         // input
@@ -76,60 +140,16 @@ int main() {
         glClearColor(0.2f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // we have to define 3 vertices in 3D (OpenGL handles all its graphics in 3D)
-        // OpenGL's range of values: -1.0 and 1.0 on all 3 axes (x, y and z)
-        // if they are outside of this spectrum, they are not taken into consideration
-        // Vertex Buffer Object - stores large amount of vertice data in it
-        // CPU takes a long time to get the data to GPU
-        // once data is in GPU, the process becomes fast, so we want to send as much data at once as possible
-        float vertices[] = {
-                -0.5f, -0.5f, 0.0f,
-                0.5f, -0.5f, 0.0f,
-                0.0f, 0.5f, 0.0f
-        };
-
-        
-
-        // VAO - vertex array object
-        unsigned int VAO;
-        glGenVertexArrays(1, &VAO);
-
-        glBindVertexArray(VAO);
-
-        unsigned int VBO;
-        glGenBuffers(1, &VBO);
-
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-        // 1. what type of buffer we want data from
-        // 2. size of data in bytes we want to pass
-        // 3. actual data we want to send
-        // 4. how we want to manage the data
-        // STREAM, set once, used a few times at most
-        // STATIC, set once, used many times
-        // DYNAMIC, changed alot, used alot
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-        // telling opengl how to interpret vertex data / vertex attribute pointers
-        // 1. which vertex attribute to configure
-        // 2. size of the vertex attribute, vec3 so 3
-        // 3. type of data held
-        // 4. if we want to normalize the data
-        // 5. "stride" - space between consecutive vertex attributes
-        // 6. set the beginning of the buffer to the start of the data array
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)nullptr);
-        glEnableVertexAttribArray(0);
-
         // process shaders through a program which is linked to the shaders
         // use whenever we want to render something
         unsigned int shaderProgram = processShaderProgram();
         glUseProgram(shaderProgram);
 
-        // we want to draw something, we take the corresponding VAO, bind, draw, unbind VAO again
+        // unbind VAO after drawing
         glBindVertexArray(VAO);
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        // TODO: draw anything will come here!
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        glBindVertexArray(0); // todo: what does this do?
 
         // glfw: check and call IO(key press, release, mouse move) events, swap the buffer
         glfwPollEvents();
@@ -143,8 +163,17 @@ int main() {
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 void processInput(GLFWwindow *window) {
+    // press ESC to exit program
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
+    }
+
+    // enable wireframe mode when held
+    if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    } else {
+        // otherwise render as filled
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 }
 
