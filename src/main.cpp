@@ -13,11 +13,11 @@ const char *vertexShaderSource = "#version 330 core\n"
 
 // stored fragment shader
 const char *fragmentShaderSource = "#version 330 core\n"
-                                  "out vec4 FragColor;\n"
-                                  "void main()\n"
-                                  "{\n"
-                                  "    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-                                  "}\0";
+                                   "out vec4 FragColor;\n"
+                                   "void main()\n"
+                                   "{\n"
+                                   "    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+                                   "}\0";
 
 
 // function prototypes
@@ -26,7 +26,9 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 
 unsigned int processVertexShader();
+
 unsigned int processFragmentShader();
+
 unsigned int processShaderProgram();
 
 // global variables
@@ -82,14 +84,15 @@ int main() {
     // , considering we would have to use 2 triangles
     */
     float vertices[] = {
-            0.5f,  0.5f, 0.0f,  // top right
-            0.5f, -0.5f, 0.0f,  // bottom right
-            -0.5f, -0.5f, 0.0f,  // bottom left
-            -0.5f,  0.5f, 0.0f   // top left
+            0.0f, 0.0f, 0.0f,  // origo
+            0.25f, 0.25f, 0.0f,  // first tri-top
+            0.50f, 0.00f, 0.0f,  // first tri-right
+            0.75f, 0.25f, 0.0f,
+            0.99f, 0.0f, 0.0f,
     };
     unsigned int indices[] = {  // note that we start from 0!
-            0, 1, 3,   // first triangle
-            1, 2, 3    // second triangle
+            0, 1, 2,   // first triangle
+            2, 3, 4    // second triangle
     };
 
     // VAO - vertex array object
@@ -128,7 +131,7 @@ DYNAMIC, changed alot, used alot
     // 5. "stride" - space between consecutive vertex attributes
     // 6. set the beginning of the buffer to the start of the data array
     */ // parameters of glVertexAttribPointer
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)nullptr);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) nullptr);
     glEnableVertexAttribArray(0);
 
     // render loop
