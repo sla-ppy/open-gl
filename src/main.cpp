@@ -25,11 +25,11 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 
 void processInput(GLFWwindow *window);
 
-unsigned int processVertexShader();
+GLuint processVertexShader();
 
-unsigned int processFragmentShader();
+GLuint processFragmentShader();
 
-unsigned int processShaderProgram();
+GLuint processShaderProgram();
 
 // global variables
 const unsigned int SCREEN_WIDTH{800};
@@ -97,12 +97,12 @@ int main() {
 
     // VAO - vertex array object
     // if we want to draw something, we take the corresponding VAO, bind, draw, unbind VAO again
-    unsigned int VAO;
+    GLuint VAO;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
     // VBO - vertex buffer object
-    unsigned int VBO;
+    GLuint VBO;
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     /*
@@ -117,7 +117,7 @@ DYNAMIC, changed alot, used alot
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     // EBO - element buffer object
-    unsigned int EBO;
+    GLuint EBO;
     glGenBuffers(1, &EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
@@ -145,7 +145,7 @@ DYNAMIC, changed alot, used alot
 
         // process shaders through a program which is linked to the shaders
         // use whenever we want to render something
-        unsigned int shaderProgram = processShaderProgram();
+        GLuint shaderProgram = processShaderProgram();
         glUseProgram(shaderProgram);
 
         // unbind VAO after drawing
@@ -187,11 +187,11 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-unsigned int processVertexShader() {
+GLuint processVertexShader() {
     // ---------------------- VERTEX SHADER ----------------------
     // TLDR:
     // we create an object for the shader, so it can dynamically compile
-    unsigned int vertexShader;
+    GLuint vertexShader;
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
 
     // 1. which shader object to compile
@@ -212,10 +212,10 @@ unsigned int processVertexShader() {
     return vertexShader;
 }
 
-unsigned int processFragmentShader() {
+GLuint processFragmentShader() {
     // ------------------ FRAGMENT SHADER ------------------
     // TLDR: handles colours in an RGBA form
-    unsigned int fragmentShader;
+    GLuint fragmentShader;
     fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
     glCompileShader(fragmentShader);
@@ -232,15 +232,15 @@ unsigned int processFragmentShader() {
     return fragmentShader;
 }
 
-unsigned int processShaderProgram() {
+GLuint processShaderProgram() {
     // ----------------- SHADER PROGRAM -------------------
     // TDLR: links vertex and fragment shader with out program
-    unsigned int shaderProgram;
+    GLuint shaderProgram;
     shaderProgram = glCreateProgram();
 
     // take vertexShader from function so we can use it in the shader program
-    unsigned int vertexShader = processVertexShader();
-    unsigned int fragmentShader = processFragmentShader();
+    GLuint vertexShader = processVertexShader();
+    GLuint fragmentShader = processFragmentShader();
 
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
